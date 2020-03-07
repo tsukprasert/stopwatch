@@ -1,0 +1,92 @@
+#include <avr/io.h>
+#define LED_ON PORTC |= (1<<PORTC5);  //turn on
+#define LED_OFF PORTC &= ~(1<<PORTC5);  //turn off
+#define LED_TOGGLE PORTC ^= (1<<PORTC5); 
+#define SPI_DDR DDRB
+#define SHIFT_PORT PORTB
+#define CS DDB2
+#define MOSI DDB3
+#define MISO DDB4
+#define SCK DDB5
+#define DATA (1 << PINB3)
+#define LATCH (1 << PINB2)
+#define CLOCK (1 << PINB5)
+void SPI_MasterInit(void){
+ // make MOSI and SCK pin to output, 
+ SPI_DDR |= (1 << CS) | (1 << MOSI) | (1 << SCK);
+ SPI_DDR |= (DATA | LATCH | CLOCK);
+ //SHIFT_PORT &= ~(DATA|LATCH|CLOCK);
+ 
+ // Enable SPI, Master
+ SPCR |= (1 << SPE) | (1 << MSTR);
+ 
+ //set sck clock rate fck/2
+ SPSR |= (1 << SPI2X);  
+ 
+ SPCR |= (0 << DORD);  // transmit MSB first
+}
+ 
+uint8_t SPI_Transmit (uint8_t i){
+ // start transmission
+ SPDR = i;
+ // wait for transmission complete
+ while(!(SPSR & (1 << SPIF)));
+ PORTB ^= (1<<PORTB1);
+ PORTB ^= (1<<PORTB1);
+ return(SPDR);
+ 
+}
+uint8_t zero = 0b01011111; 
+uint8_t one = 0b00000110;
+uint8_t two = 0b01001011; 
+uint8_t three = 0b01001111; 
+uint8_t four = 0b01100110;
+uint8_t five = 0b01111101;
+uint8_t six = 0b01111101;
+uint8_t seven = 0b00000111;
+uint8_t eight = 0b11111111;
+uint8_t nine = 0b11100111;
+int main(void){ //transmission 
+ PORTC |= (1<<PORTC4)
+ PORTD |= (0b00001000);  //enables pull up resistor
+ DDRC = 0xff; //makes all the bits in the register to input mode
+ TCCR1A = 0b00000000;
+ TCCR1B |= (1<<CS11); //prescaled clock 1/clk
+ SPI_MasterInit();
+ while(1){
+  if (TCNT1 == 0){
+   SPI_Transmit(zero);
+   TCNT1=0b0;
+  }
+  if (TCNT1 == target*10){
+   SPI_Transmit(one);
+  } 
+  if (TCNT1 == target*20){
+   SPI_Transmit(two);
+  }
+  if (TCNT1 == target*30){
+   SPI_Transmit(three);
+  }
+  if (TCNT1== target*40){
+   SPI_Transmit(four);
+  }
+  if (TCNT1 == target*50){
+   SPI_Transmit(five);
+  }
+  if (TCNT1 == target*60){
+   SPI_Transmit(six);
+  }
+  if (TCNT1 == target*70){
+   SPI_Transmit(seven);
+  }
+  if (TCNT1 == target*80){
+   SPI_Transmit(eight);
+  }
+  if (TCNT1 == target*90){
+   SPI_Transmit(nine);
+   TCNT1 = 0;
+  }
+ } 
+ 
+ return(0);
+}
