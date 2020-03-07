@@ -1,0 +1,19 @@
+#include <avr/io.h>
+#define LED_ON PORTC |= (1<<PORTC5);  //turn on
+#define LED_OFF PORTC &= ~(1<<PORTC5);  //turn off
+#define LED_TOGGLE PORTC ^= (1<<PORTC5); //LED_TOGGLE
+int main(void){
+PORTD |= (0b00001000);  //enables pull up resistor
+DDRC = 0xff; //makes all the bits in the register to input mode
+TCCR1A = 0b00000000;
+TCCR1B |= (1<<CS11); //prescaled clock by 8 
+uint16_t target=0x61A8;
+while(1){
+ 
+  if (TCNT1 == target){ // every 100 ms 
+   PORTC ^= (1<<PORTC5);
+   TCNT1=0b0; 
+  }
+  
+ }
+ return(0);
