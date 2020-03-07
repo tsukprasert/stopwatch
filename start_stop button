@@ -1,3 +1,4 @@
+#include <avr/io.h>
 int main(void){
  PORTD |= (0b00000001);  //enables pull up resistor
  DDRC = 0xff;
