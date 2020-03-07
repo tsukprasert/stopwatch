@@ -1,0 +1,49 @@
+#include <avr/io.h>
+#define SPI_DDR DDRB
+#define SHIFT_PORT PORTB
+#define CS DDB2
+#define MOSI DDB3
+#define MISO DDB4
+#define SCK DDB5
+#define DATA (1 << PINB3)
+#define LATCH (1 << PINB2)
+#define CLOCK (1 << PINB5)
+void SPI_MasterInit(void){
+ // make MOSI and SCK pin to output, 
+ SPI_DDR |= (1 << CS) | (1 << MOSI) | (1 << SCK);
+ SPI_DDR |= (DATA | LATCH | CLOCK);
+ //SHIFT_PORT &= ~(DATA|LATCH|CLOCK);
+ 
+ // Enable SPI, Master
+ SPCR |= (1 << SPE) | (1 << MSTR);
+ 
+ //set sck clock rate fck/2
+ SPSR |= (1 << SPI2X);  
+ 
+ SPCR |= (0 << DORD);  // transmit MSB first
+}
+ 
+uint8_t SPI_Transmit (uint8_t i){
+// start transmission
+ SPDR = i;
+ // wait for transmission complete
+ while(!(SPSR & (1 << SPIF)));
+ PORTB ^= (1<<PORTB1);
+ PORTB ^= (1<<PORTB1);
+ return(SPDR);
+ 
+}
+uint8_t val = 0b10000001; 
+int main(void){
+ SPI_MasterInit();
+ SHIFT_PORT &= ~LATCH; 
+ SPI_Transmit(val);
+ while(1){
+ SHIFT_PORT |= LATCH;
+ SHIFT_PORT &= ~LATCH;
+ val+=0b00000001; //increment the number 
+ } 
+ 
+ 
+ return(0);
+}
