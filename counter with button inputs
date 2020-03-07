@@ -1,0 +1,179 @@
+#include <avr/io.h>
+#define LED_ON PORTC |= (1<<PORTC5);  //turn on
+#define LED_OFF PORTC &= ~(1<<PORTC5);  //turn off
+#define LED_TOGGLE PORTC ^= (1<<PORTC5); 
+#define SPI_DDR DDRB
+#define SHIFT_PORT PORTB
+#define CS DDB2
+#define MOSI DDB3
+#define MISO DDB4
+#define SCK DDB5
+#define DATA (1 << PINB3)
+#define LATCH (1 << PINB2)
+#define CLOCK (1 << PINB5)
+void SPI_MasterInit(void){
+// make MOSI and SCK pin to output, 
+ SPI_DDR |= (1 << CS) | (1 << MOSI) | (1 << SCK);
+ SPI_DDR |= (DATA | LATCH | CLOCK);
+// Enable SPI, Main
+ SPCR |= (1 << SPE) | (1 << MSTR);
+ 
+//set sck clock rate freq/2
+ SPSR |= (1 << SPI2X);  
+ 
+ SPCR |= (0 << DORD);  // transmit MSB first
+}
+ 
+uint8_t SPI_Transmit (uint8_t i){
+ // start transmission
+ SPDR = i;
+// wait for transmission complete
+ while(!(SPSR & (1 << SPIF)));
+ PORTB ^= (1<<PORTB2);
+ PORTB ^= (1<<PORTB2);
+ return(SPDR);
+ 
+}
+//define the segements 
+uint8_t zero = 0b00111111; 
+uint8_t one = 0b00000110;
+uint8_t two = 0b011011011; 
+uint8_t three = 0b11001111; 
+uint8_t four = 0b011100110;
+uint8_t five = 0b011101101;
+uint8_t six = 0b011111101;
+uint8_t seven = 0b00000111;
+uint8_t eight = 0b11111111;
+uint8_t nine = 0b11100111;
+void digit1(int x){ //first digit from the left
+ PORTC = (1<<PORTC1)|(0<<PORTC2)|(0<<PORTC3)|(0<<PORTC4); //turn on port C1, off the rest
+ if (x== 0) {SPI_Transmit(zero);}
+ if (x== 1) {SPI_Transmit(one);} 
+ if (x== 2) {SPI_Transmit(two);}
+ if (x== 3) {SPI_Transmit(three);}
+ if (x== 4) {SPI_Transmit(four);}
+ if (x== 5) {SPI_Transmit(five);}
+ if (x== 6) {SPI_Transmit(six);}
+ if (x== 7) {SPI_Transmit(seven);}
+ if (x== 8) {SPI_Transmit(eight);}
+ if (x== 9) {SPI_Transmit(nine);}   
+}
+void digit2(int x){
+ PORTC = (0<<PORTC1)|(1<<PORTC2)|(0<<PORTC3)|(0<<PORTC4);
+ if (x== 0) {SPI_Transmit(zero);}
+ if (x== 1) {SPI_Transmit(one);}
+ if (x== 2) {SPI_Transmit(two);}
+ if (x== 3) {SPI_Transmit(three);}
+ if (x== 4) {SPI_Transmit(four);}
+ if (x== 5) {SPI_Transmit(five);}
+ if (x== 6) {SPI_Transmit(six);}
+ if (x== 7) {SPI_Transmit(seven);}
+ if (x== 8) {SPI_Transmit(eight);}
+ if (x== 9) {SPI_Transmit(nine);}
+}
+void digit3(int x){
+ PORTC = (0<<PORTC1)|(0<<PORTC2)|(1<<PORTC3)|(0<<PORTC4);
+ if (x== 0) {SPI_Transmit(zero);}
+ if (x== 1) {SPI_Transmit(one);}
+ if (x== 2) {SPI_Transmit(two);}
+ if (x== 3) {SPI_Transmit(three);}
+ if (x== 4) {SPI_Transmit(four);}
+ if (x== 5) {SPI_Transmit(five);}
+ if (x== 6) {SPI_Transmit(six);}
+ if (x== 7) {SPI_Transmit(seven);}
+ if (x== 8) {SPI_Transmit(eight);}
+ if (x== 9) {SPI_Transmit(nine);}
+}
+
+void digit4(int x){
+ PORTC = (0<<PORTC1)|(0<<PORTC2)|(0<<PORTC3)|(1<<PORTC4);
+ if (x== 0) {SPI_Transmit(zero);}
+ if (x== 1) {SPI_Transmit(one);}
+ if (x== 2) {SPI_Transmit(two);}
+ if (x== 3) {SPI_Transmit(three);}
+ if (x== 4) {SPI_Transmit(four);}
+ if (x== 5) {SPI_Transmit(five);}
+ if (x== 6) {SPI_Transmit(six);}
+ if (x== 7) {SPI_Transmit(seven);}
+ if (x== 8) {SPI_Transmit(eight);}
+ if (x== 9) {SPI_Transmit(nine);} 
+}
+ 
+int main(void){ //transmission 
+ PORTD |= (0b00001001);  //enables pull up resistor
+ DDRD = 0b00001001; //set to input 
+ DDRC = 0xff; //makes all the bits in the register to input mode
+ TCCR1A = 0b00000000;
+ TCCR1B |= (1<<CS11)|(1<<CS10)|(0<<CS12); //prescaled clock 1/clk, scaled by 64
+ uint16_t target = 3125; // new target for new clock division 
+ uint16_t data =125; // target for the two milliseconds ticks 
+ SPI_MasterInit(); //make MOSI and SCK output
+ 
+int i =0; //increment for digit 4
+int j =0; //increment for digit 3
+int k =0; //increment for digit 2
+int l =0; //increment for digit 1 
+int count = 0; //counter 
+int start = 1;
+ while(1){
+  
+   if((PIND & (1 << PORTD0)) == 0){ //if the start button is pressed 
+    
+    while(1){
+   if(start==1){
+   if(count%25==0){
+    count=0;
+    i++;
+    if(i==10){
+     i=0;
+     j++;
+     if(j==10){
+      j=0;
+      k++; 
+      if(k==6){
+       k=0;
+       l++; 
+       if(l==10){
+        l=0;
+        }}}}}
+      }
+   //time-multiplexing
+    while(!(TCNT1== data)){}
+    count++;
+   digit4(i);
+   TCNT1 =0;
+   while(!(TCNT1== data)){}
+   count++;
+   digit3(j);
+   TCNT1=0;
+   while(!(TCNT1== data)){}
+   count++;
+   digit2(k);
+   TCNT1=0;
+   while(!(TCNT1== data)){}
+   count++;
+   digit1(l);
+   TCNT1=0;
+   while(!(TCNT1== data)){}
+   count++;
+   TCNT1 =0;
+   if((PIND & (1 << PORTD0)) == 0){ //if the start button is pressed again
+    if(start==1){start=0;}
+     else{start=1;}
+   }
+   if((PIND & (1 << PORTD3)) == 0){ //if the reset button is pressed
+    i =-1;
+    j =0;
+    k =0;
+    l =0;
+    count = 0;
+    start=0; //stop the counter and wait for the start button to be pressed again
+   }
+   
+   }
+   }
+ 
+ }
+ 
+ return(0);
+}
